@@ -54,10 +54,7 @@ const itHomeApi = () => {
     })
     return rawData
   }
-  return {
-    url,
-    template,
-  }
+  return { url, template }
 }
 
 const apiData = {

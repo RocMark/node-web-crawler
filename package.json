@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "init": "echo > db.json && npm i && npm i json-server -g",
     "serve": "node src/main",
     "server": "json-server --watch db.json",
     "eslint": "./node_modules/.bin/eslint --fix src"
