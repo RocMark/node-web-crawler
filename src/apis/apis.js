@@ -1,72 +1,26 @@
 const request = require('request')
-const cheerio = require('cheerio')
-const { filterData } = require('../format')
+const { filterData } = require('../filter')
 const { writePost } = require('../file')
+const { apiData } = require('./apiData')
 
-const itHomeApi = () => {
-  const url = 'https://ithelp.ithome.com.tw/?tab=hot&page=1'
-  const template = (html) => {
-    const $ = cheerio.load(html)
-    const rawData = []
-    $('.qa-list').each((index, elem) => {
-      const view = $(elem)
-        .find('.qa-list__condition > a')
-        .next().next()
-        .find('.qa-condition__count')
-        .text()
+/*
+  流程
+    1. 擷取網頁的 DOM 抽出需要的資料
+    2. filterData => 過濾資料 ( 排除 id 相同 & title|tag 不含關鍵字內的資料 )
+    3. 寫入檔案中
+*/
 
-      const createAt = $(elem).find('.qa-list__info-time').text()
-      const tags = $(elem).find('.qa-list__tags').toArray()
-        .reduce((sum, el) => {
-          return `${sum} ${el}`
-        }, '')
-
-      const link = $(elem).find('.qa-list__title-link').attr('href')
-      const getID = (urlStr) => {
-        const splitStrArray = urlStr.split('/')
-        const id = splitStrArray[splitStrArray.length - 1]
-        return id
-      }
-      const id = getID(link)
-      const title = $(elem).find('.qa-list__title-link').text().toLowerCase()
-
-      const result = { id, link, view, create_at: createAt, tags, title }
-      rawData.push(result)
-    })
-    return rawData
-  }
-  return {
-    url,
-    template,
-  }
-}
-
-const fetchPost = (callback) => {
-  request(itHomeApi().url, (err, res, html) => {
+const fetchApis = ({ apiName, overwriteUrl = '' }) => {
+  const url = overwriteUrl || apiData[apiName].url
+  request(url, (err, res, html) => {
     const requestSuccess = !err && res.statusCode === 200
     let rawData = []
     if (requestSuccess) {
-      rawData = itHomeApi().template(html)
+      rawData = apiData[apiName].template(html)
+      const filteredData = rawData.length > 0 ? filterData({ apiName, data: rawData }) : []
+      writePost({ apiName, url, newData: filteredData })
     }
-    return callback(rawData)
   })
 }
 
-const itHomeCronJob = () => {
-  // 先將網頁上要的資料取出整理
-  fetchPost((data) => {
-    // 過濾掉自行設定的條件不需要的內容
-    const filteredData = filterData(data)
-    // 讀取舊有資料 & 寫入資料
-    writePost({ newData: filteredData })
-  })
-}
-
-const cronJob = (data) => {
-  // 過濾掉自行設定的條件不需要的內容
-  const filteredData = filterData(data)
-  // 讀取舊有資料 & 寫入資料
-  writePost({ newData: filteredData })
-}
-
-module.exports = { itHomeCronJob, fetchPost }
+module.exports = { fetchApis }

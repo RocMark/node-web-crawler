@@ -1,20 +1,12 @@
-const { resetFile, writePost } = require('./file')
-const { itHomeCronJob } = require('./apis/apis')
+const { initFile, resetFile } = require('./file')
+const { fetchApis } = require('./apis/apis')
+const { triggerTime } = require('./config')
 
 const process = () => {
-  itHomeCronJob()
+  fetchApis({ apiName: 'itHome' })
+  // fetchApis({ apiName: 'itHome' })
 }
 
-const devMode = true
-
-if (devMode) {
-  resetFile()
-  // process()
-}
-
-const startCronJob = true
-if (startCronJob) {
-  const min = 60 * 1000
-  const triggerTime = 0.05 * min // 3sec
-  setInterval(process, triggerTime)
-}
+initFile()
+// process()
+// setInterval(process, triggerTime)
