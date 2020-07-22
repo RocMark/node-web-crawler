@@ -33,5 +33,6 @@ module.exports = {
     /* For Testing */
     'no-unused-vars': 'off',
     'no-console': 'off',
+    'array-callback-return': ['error', { allowImplicit: true }],
   },
 }
